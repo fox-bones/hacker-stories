@@ -24,9 +24,18 @@ function App() {
     <div>
       <h1>My Hacker Stories</h1>
 
+      <Search />
+
       <hr />
 
-      <ul>
+      <List />
+    </div>
+  );
+}
+
+function List() {
+  return (
+    <ul>
         {list.map(function (item) {
           return (
             <li key={item.objectID}>
@@ -38,8 +47,16 @@ function App() {
           ) 
         })}
       </ul>
+  )
+}
+
+function Search() {
+  return (
+    <div>
+      <label htmlFor="Search">Search: </label>
+      <input id="search" type="text" /> 
     </div>
-  );
+  )
 }
 
 export default App
