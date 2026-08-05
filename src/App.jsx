@@ -96,25 +96,25 @@ const App = () => {
   }, [handleFetchedStories]);
 
   return (
-  <div>
-    <h1>My Hacker Stories</h1>
+    <div>
+      <h1>My Hacker Stories</h1>
 
-    <SearchForm
-      searchTerm={searchTerm}
-      onSearchInput={handleSearchInput}
-      onSearchSubmit={handleSearchSubmit}
-    />
+      <SearchForm
+        searchTerm={searchTerm}
+        onSearchInput={handleSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+      />
 
-    <hr />
+      <hr />
 
-    {stories.isError && <p>Something went wrong ...</p>}
+      {stories.isError && <p>Something went wrong ...</p>}
 
-    {stories.isLoading ? (
-      <p>Loading ...</p>
-    ) : (
-      <List list={stories.data} onRemoveItem={handleRemoveStory} />
-    )}
-  </div>
+      {stories.isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+      )}
+    </div>
   )
 };
 
