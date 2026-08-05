@@ -1,5 +1,10 @@
 import * as React from 'react';
 import axios from 'axios';
+import styles from './App.module.css';
+import check from './check.png';
+
+// Variable declarations
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const storiesReducer = (state, action) => {
   switch (action.type) {
@@ -35,19 +40,34 @@ const storiesReducer = (state, action) => {
 };
 
 const useStorageState = (key, initialState) => {
+  const isMounted = React.useRef(false);
+
   const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
   );
 
   React.useEffect(() => {
-    localStorage.setItem(key, value);
+    if (!isMounted.current) {
+      isMounted.current = true;
+    }
+    else {
+      localStorage.setItem(key, value);
+    }
   }, [value, key]);
 
   return [value, setValue];
 };
 
-const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+const getSumComments = (stories) => {
+  console.log('C');
 
+  return stories.data.reduce(
+    (result, value) => result + value.num_comments,
+    0
+  );
+}
+
+// App 
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
   const [stories, dispatchStories] = React.useReducer(
@@ -69,12 +89,12 @@ const App = () => {
     event.preventDefault();
   };
 
-  const handleRemoveStory = (item) => {
+  const handleRemoveStory = React.useCallback((item) => {
     dispatchStories({
       type: 'REMOVE_STORY',
       payload: item,
     });
-  }
+  }, []);
 
   const handleFetchedStories = React.useCallback(async () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT' });
@@ -95,17 +115,21 @@ const App = () => {
     handleFetchedStories();
   }, [handleFetchedStories]);
 
+  const sumComments = React.useMemo(
+    () => getSumComments(stories),
+    [stories]
+  );
+
   return (
-    <div>
-      <h1>My Hacker Stories</h1>
+    <div className={styles.container}>
+      <h1 className={styles.headlinePrimary}>My Hacker Stories with {sumComments} comments.</h1>
 
       <SearchForm
         searchTerm={searchTerm}
         onSearchInput={handleSearchInput}
         onSearchSubmit={handleSearchSubmit}
+        buttonSize={`${styles.button} ${styles.buttonLarge}`}
       />
-
-      <hr />
 
       {stories.isError && <p>Something went wrong ...</p>}
 
@@ -118,29 +142,35 @@ const App = () => {
   )
 };
 
-const List = ({ list, onRemoveItem }) => (
-  <ul>
-    {list.map((item) => (
-      <Item 
-        key={item.objectID} 
-        item={item}
-        onRemoveItem={onRemoveItem} 
-      />
-    ))}
-  </ul>
+const List = React.memo(
+  ({ list, onRemoveItem }) => (
+    <ul>
+      {list.map((item) => (
+        <Item 
+          key={item.objectID} 
+          item={item}
+          onRemoveItem={onRemoveItem} 
+        />
+      ))}
+    </ul>
+  )
 );
 
 const Item = ({ item, onRemoveItem }) => (
-  <li>
-    <span>
+  <li className={styles.item}>
+    <span style={{ width: '40%' }}>
       <a href={item.url}>{item.title}</a> 
     </span>
-    <span>{item.author} </span>
-    <span>{item.num_comments} </span>
-    <span>{item.points}</span>
-    <span>
-      <button type="button" onClick={() => onRemoveItem(item)}>
-        Dismiss
+    <span style={{ width: '30%' }}>{item.author} </span>
+    <span style={{ width: '10%' }}>{item.num_comments} </span>
+    <span style={{ width: '10%' }}>{item.points}</span>
+    <span style={{ width: '10%' }}>
+      <button 
+        type="button" 
+        onClick={() => onRemoveItem(item)}
+        className={`${styles.button} ${styles.buttonSmall}`}
+      >
+        <img src={check} alt="Remove" width={18} height={18} />
       </button>
     </span>
   </li>
@@ -157,7 +187,7 @@ const InputWithLabel = ({ id, value, type = 'text', onInputChange, isFocused, ch
 
   return (
     <>
-      <label htmlFor={id}>{children}</label>
+      <label htmlFor={id} className={styles.label}>{children}</label>
         &nbsp;
         <input 
         ref={inputRef}
@@ -165,6 +195,7 @@ const InputWithLabel = ({ id, value, type = 'text', onInputChange, isFocused, ch
         type={type}
         value={value} 
         onChange={onInputChange} 
+        className={styles.input}
       /> 
     </>
   );
@@ -174,8 +205,9 @@ const SearchForm = ({
   searchTerm,
   onSearchInput,
   onSearchSubmit,
+  buttonSize
 }) => (
-  <form onSubmit={onSearchSubmit}>
+  <form onSubmit={onSearchSubmit} className={styles.searchForm}>
       <InputWithLabel 
         id="search"
         value={searchTerm} 
@@ -186,7 +218,11 @@ const SearchForm = ({
         <strong>Search: </strong>
       </InputWithLabel>
 
-      <button type="submit" disabled={!searchTerm}>
+      <button 
+        type="submit" 
+        disabled={!searchTerm}
+        className={buttonSize} 
+      >
         Submit
       </button>
     </form>
