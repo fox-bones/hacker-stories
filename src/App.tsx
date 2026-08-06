@@ -6,7 +6,51 @@ import check from './check.png';
 // Variable declarations
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
-const storiesReducer = (state, action) => {
+type Story = {
+  objectID: string;
+  url: string;
+  title: string;
+  author: string;
+  num_comments: number;
+  points: number;
+}
+
+type Stories = Story[];
+
+type StoriesState = {
+  data: Stories;
+  isLoading: boolean;
+  isError: boolean;
+}
+
+type StoriesFetchInitAction = {
+  type: 'STORIES_FETCH_INIT';
+}
+
+type StoriesFetchSuccessAction = {
+  type: 'STORIES_FETCH_SUCCESS';
+  payload: Stories;
+}
+
+type StoriesFetchFailureAction = {
+  type: 'STORIES_FETCH_FAILURE';
+}
+
+type RemoveStoryAction = {
+  type: 'REMOVE_STORY';
+  payload: Story;
+}
+
+type StoriesAction = 
+  | StoriesFetchInitAction
+  | StoriesFetchSuccessAction
+  | StoriesFetchFailureAction
+  | RemoveStoryAction;
+
+const storiesReducer = (
+  state: StoriesState, 
+  action: StoriesAction
+): StoriesState => {
   switch (action.type) {
     case 'STORIES_FETCH_INIT':
       return {
@@ -39,7 +83,10 @@ const storiesReducer = (state, action) => {
   }
 };
 
-const useStorageState = (key, initialState) => {
+const useStorageState = (
+  key: string, 
+  initialState: string
+): [string, (newValue: string) => void] => {
   const isMounted = React.useRef(false);
 
   const [value, setValue] = React.useState(
@@ -58,11 +105,9 @@ const useStorageState = (key, initialState) => {
   return [value, setValue];
 };
 
-const getSumComments = (stories) => {
-  console.log('C');
-
+const getSumComments = (stories: StoriesState): number => {
   return stories.data.reduce(
-    (result, value) => result + value.num_comments,
+    (sum, story) => sum + story.num_comments,
     0
   );
 }
@@ -72,24 +117,31 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
   const [stories, dispatchStories] = React.useReducer(
     storiesReducer,
-    { data: [], isLoading: false, isError: false }
+    { 
+      data: [], 
+      isLoading: false, 
+      isError: false,
+    } satisfies StoriesState
   );
 
   const [url, setUrl] = React.useState(
     `${API_ENDPOINT}${searchTerm}`
   );
 
-  const handleSearchInput = (event) => {
+  const handleSearchInput = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearchSubmit = (event) => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
-
+  const handleSearchSubmit = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
   };
 
-  const handleRemoveStory = React.useCallback((item) => {
+  const handleRemoveStory = React.useCallback((item: Story) => {
     dispatchStories({
       type: 'REMOVE_STORY',
       payload: item,
@@ -142,7 +194,12 @@ const App = () => {
   )
 };
 
-const List = React.memo(
+type ListProps = {
+  list: Stories;
+  onRemoveItem: (item: Story) => void;
+}
+
+const List: React.FC<ListProps> = React.memo(
   ({ list, onRemoveItem }) => (
     <ul>
       {list.map((item) => (
@@ -156,7 +213,12 @@ const List = React.memo(
   )
 );
 
-const Item = ({ item, onRemoveItem }) => (
+type ItemProps = {
+  item: Story,
+  onRemoveItem: (item: Story) => void;
+}
+
+const Item = ({ item, onRemoveItem}: ItemProps) => (
   <li className={styles.item}>
     <span style={{ width: '40%' }}>
       <a href={item.url}>{item.title}</a> 
@@ -176,8 +238,26 @@ const Item = ({ item, onRemoveItem }) => (
   </li>
 );
 
-const InputWithLabel = ({ id, value, type = 'text', onInputChange, isFocused, children }) => {
-  const inputRef = React.useRef();
+type InputWithLabelProps = {
+  id: string,
+  value: string,
+  type?: string,
+  isFocused?: boolean,
+  onInputChange: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+  children: React.ReactNode;
+}
+
+const InputWithLabel: React.FC<InputWithLabelProps> = ({ 
+  id, 
+  value, 
+  type = 'text', 
+  onInputChange, 
+  isFocused, 
+  children 
+}) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (isFocused && inputRef.current) {
@@ -201,7 +281,18 @@ const InputWithLabel = ({ id, value, type = 'text', onInputChange, isFocused, ch
   );
 };
 
-const SearchForm = ({ 
+type SearchFormProps = {
+  searchTerm: string;
+  onSearchInput: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+  onSearchSubmit: (
+    event: React.FormEvent<HTMLFormElement>
+  ) => void;
+  buttonSize: string;
+}
+
+const SearchForm: React.FC<SearchFormProps> = ({ 
   searchTerm,
   onSearchInput,
   onSearchSubmit,
