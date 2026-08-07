@@ -5,3 +5,5 @@ Most of the implementation of the site utilizes Typescript. Near the end, I ran 
 During the creation of this site I learned about React components, React hooks and states, JSX development, and reducers.
 
 This project follows in accordance with Robin Weiruch's The Road to React lessons and demonstrations. 
+
+This site has also been deployed to Google's Firebase for viewing from anywhere: https://project-8508376682125880375.web.app
